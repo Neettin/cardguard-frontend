@@ -342,7 +342,12 @@ function Navbar({ page, setPage, health }) {
     window.addEventListener("scroll", fn, { passive: true });
     return () => window.removeEventListener("scroll", fn);
   }, []);
-  const go = (id) => { setPage(id); setOpen(false); window.scrollTo(0, 0); };
+  const go = (id) => {
+  setPage(id);
+  setOpen(false);
+  window.scrollTo(0, 0);
+  window.history.pushState(null, "", id === "home" ? "/" : `/${id}`);
+};
   return (
     <>
       <nav className={`navbar${scrolled ? " scrolled" : ""}`}>
@@ -984,7 +989,10 @@ function DashboardPage({ health, setPage }) {
 //  ROOT APP
 // ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [page,   setPage]   = useState("home");
+  const [page, setPage] = useState(() => {
+  const path = window.location.pathname.replace("/", "") || "home";
+  return ["home", "predict", "batch", "dashboard"].includes(path) ? path : "home";
+});
   const [health, setHealth] = useState(null);
   const cursorRef = useRef(); const ringRef = useRef();
   const rxRef=useRef(0); const ryRef=useRef(0); const mxRef=useRef(0); const myRef=useRef(0);
