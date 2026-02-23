@@ -587,92 +587,268 @@ function PredictPage() {
   const [error,   setError]   = useState("");
   const [flipped, setFlipped] = useState(false);
   const flipRef = useRef();
-  const onChange   = e => { const{name,value}=e.target; setForm(p => ({...p,[name]:name==="type"?value:value===""?"":Number(value)})); };
-  const loadPreset = d => { setForm(d); setResult(null); setFlipped(false); setError(""); };
+  
+  const onChange = e => { 
+    const { name, value } = e.target; 
+    setForm(p => ({
+      ...p,
+      [name]: name === "type" ? value : (value === "" ? "" : Number(value))
+    })); 
+  };
+  
+  const loadPreset = d => { 
+    setForm(d); 
+    setResult(null); 
+    setFlipped(false); 
+    setError(""); 
+  };
+  
   const submit = async () => {
-    setError(""); setLoading(true); setResult(null); setFlipped(false);
+    setError(""); 
+    setLoading(true); 
+    setResult(null); 
+    setFlipped(false);
     try {
       const res = await apiPredict(form);
       setResult(res);
-      addToHistory({ ...res, type:form.type, amount:form.amount });
+      addToHistory({ ...res, type: form.type, amount: form.amount });
       setTimeout(() => setFlipped(true), 200);
-    } catch(e) { setError(e.message); }
-    finally { setLoading(false); }
+    } catch(e) { 
+      setError(e.message); 
+    } finally { 
+      setLoading(false); 
+    }
   };
+  
   const onTilt = e => {
     if (!flipRef.current) return;
     const rect = flipRef.current.getBoundingClientRect();
-    const x=(e.clientX-rect.left)/rect.width-.5, y=(e.clientY-rect.top)/rect.height-.5;
-    flipRef.current.style.transform=`rotateX(${-y*8}deg) rotateY(${(flipped?180:0)+x*12}deg)`;
-    flipRef.current.style.transition="transform 0.05s ease";
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    flipRef.current.style.transform = `rotateX(${-y * 8}deg) rotateY(${(flipped ? 180 : 0) + x * 12}deg)`;
+    flipRef.current.style.transition = "transform 0.05s ease";
   };
+  
   const onTiltEnd = () => {
     if (!flipRef.current) return;
-    flipRef.current.style.transition="transform 1s cubic-bezier(.23,1,.32,1)";
-    flipRef.current.style.transform=flipped?"rotateY(180deg)":"rotateY(0deg)";
+    flipRef.current.style.transition = "transform 1s cubic-bezier(.23,1,.32,1)";
+    flipRef.current.style.transform = flipped ? "rotateY(180deg)" : "rotateY(0deg)";
   };
+  
   return (
     <div className="page">
-      <div className="container" style={{ paddingTop:40,paddingBottom:60 }}>
+      <div className="container" style={{ paddingTop: 40, paddingBottom: 60 }}>
         <div className="eyebrow fade-up">Single Transaction</div>
-        <h1 className="h2 fade-up d1" style={{ marginBottom:6 }}>Fraud <span className="gold">Analysis</span></h1>
-        <p className="fade-up d2" style={{ color:"rgba(245,245,247,.38)",fontSize:14,marginBottom:36 }}>Enter transaction details for an instant AI-powered verdict.</p>
+        <h1 className="h2 fade-up d1" style={{ marginBottom: 6 }}>Fraud <span className="gold">Analysis</span></h1>
+        <p className="fade-up d2" style={{ color: "rgba(245,245,247,.38)", fontSize: 14, marginBottom: 36 }}>
+          Enter transaction details for an instant AI-powered verdict.
+        </p>
         <div className="predict-cols">
           <div className="glass glass-pad fade-up d2">
             <label className="form-label">Quick Presets</label>
-            <div style={{ display:"flex",gap:8,flexWrap:"wrap",marginBottom:24 }}>
-              {Object.entries(PRESETS).map(([lbl,data]) => <button key={lbl} className="preset-chip" onClick={() => loadPreset(data)}>{lbl}</button>)}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+              {Object.entries(PRESETS).map(([lbl, data]) => (
+                <button key={lbl} className="preset-chip" onClick={() => loadPreset(data)}>
+                  {lbl}
+                </button>
+              ))}
             </div>
-            <div style={{ marginBottom:14 }}>
+            
+            {/* FIXED DROPDOWN SECTION - Transaction Type */}
+            <div style={{ marginBottom: 14 }}>
               <label className="form-label">Transaction Type</label>
-              <select name="type" value={form.type} onChange={onChange} className="form-input form-select">
-                {TX_TYPES.map(t => <option key={t}>{t}</option>)}
-              </select>
+              <div style={{ position: 'relative' }}>
+                <select 
+                  name="type" 
+                  value={form.type} 
+                  onChange={onChange} 
+                  className="form-input"
+                  style={{ 
+                    color: '#F5F5F7',
+                    backgroundColor: 'rgba(255,255,255,.04)',
+                    WebkitAppearance: 'none',
+                    appearance: 'none',
+                    cursor: 'pointer',
+                    paddingRight: '35px'
+                  }}
+                >
+                  {TX_TYPES.map(t => (
+                    <option 
+                      key={t} 
+                      value={t}
+                      style={{ 
+                        backgroundColor: '#1a1a1f',
+                        color: '#F5F5F7',
+                        padding: '8px'
+                      }}
+                    >
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <div style={{
+                  position: 'absolute',
+                  right: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  color: '#D4AF37',
+                  fontSize: '10px',
+                  fontWeight: 'bold'
+                }}>
+                  ▼
+                </div>
+              </div>
             </div>
-            <div className="form-grid" style={{ marginBottom:24 }}>
+            
+            {/* Form fields grid */}
+            <div className="form-grid" style={{ marginBottom: 24 }}>
               {FIELDS.map(f => (
                 <div key={f.key}>
                   <label className="form-label">{f.label}</label>
-                  <input name={f.key} type="number" value={form[f.key]} onChange={onChange} placeholder={f.ph} className="form-input" min="0" step="any"/>
+                  <input 
+                    name={f.key} 
+                    type="number" 
+                    value={form[f.key]} 
+                    onChange={onChange} 
+                    placeholder={f.ph} 
+                    className="form-input" 
+                    min="0" 
+                    step="any"
+                    style={{ color: '#F5F5F7' }}
+                  />
                 </div>
               ))}
             </div>
+            
             <button className="btn-gold" onClick={submit} disabled={loading}>
-              {loading ? <><div className="spinner"/> Analyzing...</> : <><IShield/> Analyze Transaction</>}
+              {loading ? (
+                <><div className="spinner" /> Analyzing...</>
+              ) : (
+                <><IShield /> Analyze Transaction</>
+              )}
             </button>
             {error && <div className="error-box"><span>⚠</span>{error}</div>}
           </div>
-          <div className="fade-up d3" style={{ display:"flex",flexDirection:"column",alignItems:"center" }}>
-            <div className="card-scene" style={{ maxWidth:380 }}>
-              <div ref={flipRef} className={`card-flipper${flipped?" flipped":""}`} onClick={() => result && setFlipped(f=>!f)} onMouseMove={onTilt} onMouseLeave={onTiltEnd}>
-                <div className="card-face"><PremiumCard amount={form.amount} txType={form.type} isAnalyzing={loading}/></div>
-                {result && <div className="card-face card-back-face"><CardBack result={result}/></div>}
+          
+          {/* Card display section */}
+          <div className="fade-up d3" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div className="card-scene" style={{ maxWidth: 380 }}>
+              <div 
+                ref={flipRef} 
+                className={`card-flipper${flipped ? " flipped" : ""}`} 
+                onClick={() => result && setFlipped(f => !f)} 
+                onMouseMove={onTilt} 
+                onMouseLeave={onTiltEnd}
+              >
+                <div className="card-face">
+                  <PremiumCard amount={form.amount} txType={form.type} isAnalyzing={loading} />
+                </div>
+                {result && (
+                  <div className="card-face card-back-face">
+                    <CardBack result={result} />
+                  </div>
+                )}
                 {loading && !result && (
-                  <div className="card-face" style={{ display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12,background:"linear-gradient(135deg,#1A2035,#0C1525)" }}>
-                    <div className="spinner spinner-gold" style={{ width:26,height:26 }}/>
-                    <span style={{ fontFamily:"'Space Mono',monospace",fontSize:9,color:"rgba(255,255,255,.28)",textTransform:"uppercase",letterSpacing:".12em" }}>Processing...</span>
+                  <div className="card-face" style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "center", 
+                    flexDirection: "column", 
+                    gap: 12, 
+                    background: "linear-gradient(135deg,#1A2035,#0C1525)" 
+                  }}>
+                    <div className="spinner spinner-gold" style={{ width: 26, height: 26 }} />
+                    <span style={{ 
+                      fontFamily: "'Space Mono',monospace", 
+                      fontSize: 9, 
+                      color: "rgba(255,255,255,.28)", 
+                      textTransform: "uppercase", 
+                      letterSpacing: ".12em" 
+                    }}>
+                      Processing...
+                    </span>
                   </div>
                 )}
               </div>
             </div>
+            
             {result && (
               <>
-                <p style={{ fontFamily:"'Space Mono',monospace",fontSize:9,color:"rgba(245,245,247,.22)",textTransform:"uppercase",letterSpacing:".1em",marginTop:12,textAlign:"center" }}>
+                <p style={{ 
+                  fontFamily: "'Space Mono',monospace", 
+                  fontSize: 9, 
+                  color: "rgba(245,245,247,.22)", 
+                  textTransform: "uppercase", 
+                  letterSpacing: ".1em", 
+                  marginTop: 12, 
+                  textAlign: "center" 
+                }}>
                   {flipped ? "Tap card to see input" : "Tap card to see result"}
                 </p>
-                <div style={{ width:"100%",maxWidth:380,display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:14 }}>
-                  <div style={{ background:"rgba(255,255,255,.025)",border:"1px solid rgba(255,255,255,.07)",borderRadius:14,padding:"16px 14px" }}>
-                    <div className="kpi-lbl" style={{ marginBottom:5 }}>Probability</div>
-                    <div style={{ fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:riskClr(result.risk_level) }}>{fmtPct(result.fraud_probability)}</div>
-                    <div className="prob-bar-bg"><div className="prob-bar-fill" style={{ width:`${result.fraud_probability*100}%`,background:`linear-gradient(90deg,${riskClr(result.risk_level)}50,${riskClr(result.risk_level)})` }}/></div>
+                <div style={{ 
+                  width: "100%", 
+                  maxWidth: 380, 
+                  display: "grid", 
+                  gridTemplateColumns: "1fr 1fr", 
+                  gap: 10, 
+                  marginTop: 14 
+                }}>
+                  <div style={{ 
+                    background: "rgba(255,255,255,.025)", 
+                    border: "1px solid rgba(255,255,255,.07)", 
+                    borderRadius: 14, 
+                    padding: "16px 14px" 
+                  }}>
+                    <div className="kpi-lbl" style={{ marginBottom: 5 }}>Probability</div>
+                    <div style={{ 
+                      fontFamily: "'Playfair Display',serif", 
+                      fontSize: 26, 
+                      fontWeight: 700, 
+                      color: riskClr(result.risk_level) 
+                    }}>
+                      {fmtPct(result.fraud_probability)}
+                    </div>
+                    <div className="prob-bar-bg">
+                      <div className="prob-bar-fill" style={{ 
+                        width: `${result.fraud_probability * 100}%`, 
+                        background: `linear-gradient(90deg,${riskClr(result.risk_level)}50,${riskClr(result.risk_level)})` 
+                      }} />
+                    </div>
                   </div>
-                  <div style={{ background:"rgba(255,255,255,.025)",border:"1px solid rgba(255,255,255,.07)",borderRadius:14,padding:"16px 14px" }}>
-                    <div className="kpi-lbl" style={{ marginBottom:5 }}>Risk Level</div>
-                    <div style={{ fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:riskClr(result.risk_level) }}>{result.risk_level}</div>
-                    <div style={{ marginTop:6 }}><span className={`tag tag-${result.risk_level.toLowerCase()}`}>{result.prediction}</span></div>
+                  <div style={{ 
+                    background: "rgba(255,255,255,.025)", 
+                    border: "1px solid rgba(255,255,255,.07)", 
+                    borderRadius: 14, 
+                    padding: "16px 14px" 
+                  }}>
+                    <div className="kpi-lbl" style={{ marginBottom: 5 }}>Risk Level</div>
+                    <div style={{ 
+                      fontFamily: "'Playfair Display',serif", 
+                      fontSize: 26, 
+                      fontWeight: 700, 
+                      color: riskClr(result.risk_level) 
+                    }}>
+                      {result.risk_level}
+                    </div>
+                    <div style={{ marginTop: 6 }}>
+                      <span className={`tag tag-${result.risk_level.toLowerCase()}`}>
+                        {result.prediction}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <button className="btn-outline btn-sm" style={{ marginTop:14,maxWidth:380 }} onClick={() => { setResult(null); setFlipped(false); setError(""); }}>← New Analysis</button>
+                <button 
+                  className="btn-outline btn-sm" 
+                  style={{ marginTop: 14, maxWidth: 380 }} 
+                  onClick={() => { 
+                    setResult(null); 
+                    setFlipped(false); 
+                    setError(""); 
+                  }}
+                >
+                  ← New Analysis
+                </button>
               </>
             )}
           </div>
@@ -681,7 +857,6 @@ function PredictPage() {
     </div>
   );
 }
-
 // ─────────────────────────────────────────────────────────────────
 //  BATCH PAGE — uses PapaParse npm import + built-in fallback
 // ─────────────────────────────────────────────────────────────────
